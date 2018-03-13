@@ -15,7 +15,7 @@ object SparkCosmosMongoDB extends Greeting with App {
   var MONGO_READ_PASSWORD:String = "<INPUT_PASSOWRD>"
   var MONGO_READ_WRITE_PASSWORD:String = "<OUTPUT_PASSWORD>"
   var MONGO_HOST = "<HOST>"
-  var MONGO_PORT = 11
+  var MONGO_PORT = <PORT>
 
   val SPARK_SESSION = SparkSession.builder()
   .appName("MongoSparkConnectorIntro")
@@ -54,7 +54,7 @@ object SparkCosmosMongoDB extends Greeting with App {
 
     println("##############complited###############")
   }
-  
+
   def readTest(sparkSession: SparkSession) : Unit = {
     import org.apache.spark.sql.SparkSession
     import org.bson.Document
@@ -69,9 +69,9 @@ object SparkCosmosMongoDB extends Greeting with App {
 
 
   def readUsingNative() : Unit = {
-      
+
       import scala.collection.JavaConverters._
-      
+
       import com.mongodb.ServerAddress
       import com.mongodb.connection.netty.NettyStreamFactoryFactory
       import com.mongodb.async.client.MongoClientSettings
@@ -87,7 +87,7 @@ object SparkCosmosMongoDB extends Greeting with App {
       val user: String = MONGO_USERID // the user name
       val database: String = MONGO_DB // the name of the database in which the user is defined
       val password: Array[Char] = MONGO_READ_PASSWORD.toCharArray // the password as a character array
-      
+
       val credential: MongoCredential = MongoCredential.createCredential(user, database, password)
       val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup()
       val nettyStreamFactoryFactory: NettyStreamFactoryFactory =  NettyStreamFactoryFactory.builder
