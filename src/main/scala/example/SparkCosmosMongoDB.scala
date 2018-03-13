@@ -4,8 +4,8 @@ import org.apache.log4j.{Level, Logger}
 import com.mongodb.spark.sql._
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import com.mongodb.spark._
+import org.mongodb.scala.model.Aggregates._
 import example.Helpers._
-
 
 object SparkCosmosMongoDB extends Greeting with App {
   val rootLogger = Logger.getRootLogger().setLevel(Level.ERROR)
@@ -15,14 +15,15 @@ object SparkCosmosMongoDB extends Greeting with App {
   var MONGO_READ_PASSWORD:String = "<INPUT_PASSOWRD>"
   var MONGO_READ_WRITE_PASSWORD:String = "<OUTPUT_PASSWORD>"
   var MONGO_HOST = "<HOST>"
-  var MONGO_PORT = <PORT>
+  var MONGO_PORT = 11
 
   val SPARK_SESSION = SparkSession.builder()
   .appName("MongoSparkConnectorIntro")
   .config("spark.mongodb.input.uri", s"mongodb://${MONGO_USERID}:${MONGO_READ_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}.${MONGO_INPUT_COLLECTION}?ssl=true&replicaSet=globaldb")
   .config("spark.mongodb.output.uri", s"mongodb://${MONGO_USERID}:${MONGO_READ_WRITE_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}.${MONGO_INPUT_COLLECTION}?ssl=true&replicaSet=globaldb")
   .getOrCreate()
-  //writeTest(SPARK_SESSION)
+  writeTest(SPARK_SESSION)
+  //readTest(SPARK_SESSION)
   readUsingNative()
   SPARK_SESSION.sparkContext.setLogLevel("ERROR")
 
@@ -59,6 +60,8 @@ object SparkCosmosMongoDB extends Greeting with App {
     import org.bson.Document
     val mongoRDD = sparkSession.sparkContext.loadFromMongoDB()
     val df = mongoRDD.toDF()
+    //https://jira.mongodb.org/browse/SPARK-102
+    //https://github.com/mongodb/mongo-spark/blob/master/src/main/scala/com/mongodb/spark/rdd/MongoRDD.scala
     df.show()
     println("############## aggregate4 ###############")
     println("############## aggregate ###############")
@@ -107,7 +110,11 @@ object SparkCosmosMongoDB extends Greeting with App {
       val client: MongoClient = MongoClient(settings)
       val mongoDbDatabase = client.getDatabase(MONGO_DB).withCodecRegistry(codecRegistry)
       val mongoDbCollection: MongoCollection[Document] = mongoDbDatabase.getCollection(MONGO_INPUT_COLLECTION)
-      mongoDbCollection.find.results.foreach(r => println(r.toJson))
+      //mongoDbCollection.find.results.foreach(r => println(r.toJson))
+      import org.mongodb.scala.bson._
+      mongoDbCollection.aggregate(Seq(BsonDocument("""{$match:{"name":"Dwalin"}}""")))
+                       .useCursor(false).results.foreach(r => println(r.toJson))
+      //http://mongodb.github.io/mongo-scala-driver/2.2/scaladoc/org/mongodb/scala/AggregateObservable.html
       println("##########connected##############")
       eventLoopGroup.shutdownGracefully
       client.close
